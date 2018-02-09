@@ -11,8 +11,9 @@ def p(arr, j, i):
     b = sum(ex(arr, k, i) for k in range(len(arr)) if k!=i)
     return a / b
 
-def d(arr, i, j, i2):
-    return np.abs(arr[i, i2] - arr[j, i2])
+def d(arr, i, i1, i2):
+    # return np.abs(arr[i, i2] - arr[j, i2])
+    return 2*(arr[i1, i2] - arr[i, i2])
 
 def norm1(i, j):
     return norm(arr1[i] - arr1[j])**2
@@ -80,12 +81,13 @@ def get_grad(arr1, arr2, i1, i2):
         return a / b
     
     @lru_cache(maxsize=None)
-    def d(i, j):
+    def d(i, i1):
         '''
         "Дистанция после дифференцирования" - то же самое, только arr == arr2 и i2 == i2
         '''
-        a = np.abs(arr2[i, i2] - arr2[j, i2])
-        return a
+        dist = 2*(arr2[i1, i2] - arr2[i, i2])
+        return dist
+    
     def get_i_part(i):
         '''
         считаем i часть суммы
