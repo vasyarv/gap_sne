@@ -129,13 +129,35 @@ def get_mae(arr1, arr2, nan_coords):
         vec2.append(arr2[x, y])
     return mean_absolute_error(vec1, vec2)
 
-def get_msqe(arr1, arr2, nan_coords):
+def get_mape(arr1, arr2, nan_coords):
     vec1 = []
     vec2 = []
     for j, (x,y) in enumerate(nan_coords):
         vec1.append(arr1[x, y])
         vec2.append(arr2[x, y])
-    return mean_squared_error(vec1, vec2)
+    return mean_absolute_percentage_error(np.array(vec1), np.array(vec2))
+
+def get_rmse(arr1, arr2, nan_coords):
+    vec1 = []
+    vec2 = []
+    for j, (x,y) in enumerate(nan_coords):
+        vec1.append(arr1[x, y])
+        vec2.append(arr2[x, y])
+    return np.sqrt(mean_squared_error(vec1, vec2))
+
+def get_rmspe(arr1, arr2, nan_coords):
+    vec1 = []
+    vec2 = []
+    for j, (x,y) in enumerate(nan_coords):
+        vec1.append(arr1[x, y])
+        vec2.append(arr2[x, y])
+    vec1 = np.array(vec1)
+    vec2 = np.array(vec2)
+    pi = np.abs(vec1-vec2) / vec1
+    return np.mean(100*pi)
+
+def mean_absolute_percentage_error(y_true, y_pred): 
+    return np.mean(np.abs((y_true - y_pred) / y_true)) * 100
 
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import cross_val_score
