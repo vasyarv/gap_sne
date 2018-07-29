@@ -167,3 +167,29 @@ def get_acc(arr2, target):
 #     df_acc['target'] = target
     forest = RandomForestClassifier()
     return cross_val_score(forest, arr2, target, scoring='accuracy', cv=7).mean()
+
+def set_nans(df0, seed, num_nan_cols, nan_fraction):
+    df = df0.copy()
+    np.random.seed(seed)
+    if num_nan_cols >= 0:
+        nan_cols = np.random.random_integers(0, df.shape[1] - 1, num_nan_cols)
+        for col in set(nan_cols):
+            df.loc[df.sample(int(nan_fraction * len(df))).index, col] = np.nan
+        nan_coords = np.array(np.where(df.isnull().values)).T
+    else:
+        all_pairs = np.array([[i,j] for i in range(df.shape[0]) for j in range(df.shape[1])])
+        nan_places = np.random.choice(np.arange(0, df.size), size=int(nan_fraction*df.size), replace=False)
+        nan_coords = all_pairs[nan_places]
+        # df.iloc[nan_coors[:,0], nan_coors[:,1]] = None
+        for x,y in nan_coords:
+            df.iloc[x, y] = np.nan
+            
+    print('Num nan places: {}'.format(nan_coords.shape[0]))    
+    df1 = df.loc[:, df.isnull().sum() == 0]
+    df2 = df.fillna(df.mean())
+    print(df1.shape, df2.shape)
+    arr_nan = df.values # с пропусками
+    arr_raw = df0.values # исходные
+    arr_known = df1.values # суженные до известных признаков
+    arr_pred = df2.values # текущие предсказанные 
+    return df, df1, df2, arr_nan, arr_raw, arr_known, arr_pred, nan_coords
