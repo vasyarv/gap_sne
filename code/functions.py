@@ -193,3 +193,15 @@ def set_nans(df0, seed, num_nan_cols, nan_fraction):
     arr_known = df1.values # суженные до известных признаков
     arr_pred = df2.values # текущие предсказанные 
     return df, df1, df2, arr_nan, arr_raw, arr_known, arr_pred, nan_coords
+
+def Cnk(n, k):
+    a = b = c = tmp = 1
+    for i in range(1, n+1):
+        tmp *= i
+        if i == n-k:
+            a = tmp
+        if i == k:
+            b = tmp
+        if i == n:
+            c = tmp
+    return c / (a*b)
