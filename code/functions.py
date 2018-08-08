@@ -17,7 +17,10 @@ def get_weights_gap(code_matrix, dich_classifiers=None, weights_type=None):
             for j in range(N): # кол-во дихотомий
                 diff_munu = code_matrix[nu][j] - code_matrix[mu][j]
                 if weights_type is not None:
-                    score = dich_classifiers[j][weights_type]
+                    if weights_type == 'confusion_list':
+                        score = dich_classifiers[j][weights_type][mu]#, nu].mean() #maybe dirty hack
+                    else:
+                        score = dich_classifiers[j][weights_type]
                     if diff_munu == 1:
                         diff_munu = score
                     else:
@@ -31,7 +34,7 @@ def get_weights_gap(code_matrix, dich_classifiers=None, weights_type=None):
     A_eq = np.ones(N+1).reshape((1, -1))
     A_eq[0][-1] = 0
     b_eq = np.array(N).reshape((-1))
-    opt_result = linprog(c, A_ub, b_ub, A_eq, b_eq, options={'disp': True})
+    opt_result = linprog(c, A_ub, b_ub, A_eq, b_eq, options={'disp': False})
     return opt_result['x'][:-1] # last value is gap
 
 def ex(arr, j, i):
