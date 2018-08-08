@@ -239,3 +239,66 @@ def Cnk(n, k):
         if i == n:
             c = tmp
     return c / (a*b)
+
+def predict_codeword(x, dich_classifiers):
+    codeword = []
+    for dich in dich_classifiers:
+        clf = dich['model']
+        codeword.append(clf.predict(x.reshape(1, -1)))
+    return np.array(codeword).flatten()
+
+def hamming(arr1, arr2, scores=None, weights=1):
+#     print(arr1, arr2, scores)
+    if scores is None:
+        return (arr1 != arr2).sum()
+    return ((arr1 != arr2)*scores*weights).sum() + ((arr1 == arr2)*(1-scores)*weights).sum()
+    
+def predict_class(x, dich_classifiers, code_matrix, score_type=None, weights=1, verbose=False):
+    codeword = predict_codeword(x, dich_classifiers)
+    if not score_type:
+        hammings = np.array([hamming(codeword, class_code, weights=weights) for class_code in code_matrix])
+    else:
+        scores = np.array([d[score_type] for d in dich_classifiers])
+        if score_type == 'confusion_list':
+            # ПРОВЕРИТЬ ВЕРНО ЛИ ФОРМИРУЮТСЯ ОЦЕНКИ ТУТ
+            hammings = np.array([hamming(codeword, class_code, scores.T[i], weights=weights) \
+                                 for i, class_code in enumerate(code_matrix)])
+        else:
+            hammings = np.array([hamming(codeword, class_code, scores) for class_code in code_matrix])
+    if verbose:
+        print(hammings)
+    indices = np.where(hammings == hammings.min())
+    return np.random.choice(indices[0])
+
+def predict_all(X_test, dich_classifiers, code_matrix, score_type=None, weight_type=None):
+    if weight_type is None:
+        weights = 1
+    else:
+        weights = get_weights_gap(code_matrix, dich_classifiers, score_type)
+    preds = [predict_class(x, dich_classifiers, code_matrix, score_type, weights) for x in X_test]
+    preds = np.array(preds)
+    return preds
+
+def make_random_dichs(l, N):
+    code_matrix = None
+    for i in tqdm(range(N), desc='Adding dich'):
+        code_matrix = add_random_dich(l, code_matrix)
+    
+def add_random_dich(l=10, code_matrix=None):
+    if code_matrix is None:
+        # матрица пуста
+        dich = np.random.randint(0, 2, l)
+        while np.unique(dich).size == 1:
+            dich = np.random.randint(0, 2, l)
+        return dich.reshape((-1, 1))
+    # матрица непуста
+    dich = np.random.randint(0, 2, l)
+    def does_dich_exist(dich, code_matrix):
+        diff = (cm == dich).sum(axis=0)
+        if diff.max() == l or diff.min() == 0:
+            return True
+        return False
+    while np.unique(dich).size == 1 and not does_dich_exist(dich, code_matrix):
+        dich = np.random.randint(0, 2, l)
+#     print(code_matrix.shape, dich.shape)
+    return np.hstack([code_matrix, dich.reshape((-1, 1))])
