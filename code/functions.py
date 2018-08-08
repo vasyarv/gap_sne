@@ -283,6 +283,7 @@ def make_random_dichs(l, N):
     code_matrix = None
     for i in tqdm(range(N), desc='Adding dich'):
         code_matrix = add_random_dich(l, code_matrix)
+    return code_matrix
     
 def add_random_dich(l=10, code_matrix=None):
     if code_matrix is None:
@@ -302,3 +303,25 @@ def add_random_dich(l=10, code_matrix=None):
         dich = np.random.randint(0, 2, l)
 #     print(code_matrix.shape, dich.shape)
     return np.hstack([code_matrix, dich.reshape((-1, 1))])
+
+def train_dichs(code_matrix, BaseClassifier, params=None):
+    dich_classifiers = []
+    l, N = code_matrix.shape
+    for i in tqdm(range(N), desc='Training dich classifiers'):
+        if params is None:
+            clf = BaseClassifier()
+        else:
+            clf = BaseClassifier(**params)
+        X = X_train
+        y_classes = code_matrix.T[i]
+        y = np.array([y_classes[i] for i in y_train])
+        clf.fit(X, y)
+        y_pred = clf.predict(X_test)
+        y_true = np.array([y_classes[i] for i in y_test])
+        accuracy = accuracy_score(y_true, y_pred)
+        f1 = f1_score(y_true, y_pred)
+        true_mask = (y_pred == y_true)
+        confusion_list = np.array([np.sum(true_mask*(y_test==i))/np.sum(y_test==i) for i in range(l)])
+        dich_classifiers.append({'model': clf, 'accuracy': accuracy, 
+                                 'f1': f1, 'confusion_list': confusion_list})
+    return dich_classifiers
