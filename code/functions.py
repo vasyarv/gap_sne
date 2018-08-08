@@ -2,6 +2,37 @@ import numpy as np
 from numpy.linalg import norm
 from functools import lru_cache
 from tqdm import tqdm
+from scipy.optimize import linprog
+
+def get_weights_gap(code_matrix, dich_classifiers=None, weights_type=None):
+    l, N = code_matrix.shape
+    c = np.zeros(N+1)
+    c[-1] = -1
+    # размер A Nx (l*(l-1)/2)
+    A_ub = []
+    b_ub = np.zeros(l*(l-1)//2)
+    for nu in range(l):
+        for mu in range(nu+1, l):
+            A_arr = []
+            for j in range(N): # кол-во дихотомий
+                diff_munu = code_matrix[nu][j] - code_matrix[mu][j]
+                if weights_type is not None:
+                    score = dich_classifiers[j][weights_type]
+                    if diff_munu == 1:
+                        diff_munu = score
+                    else:
+                        diff_munu = 1-score
+                A_arr.append(-np.abs(diff_munu))
+            A_arr.append(1)
+            A_ub.append(A_arr)
+    A_ub = np.array(A_ub)
+    A_ub = np.vstack([A_ub, -np.eye(N+1)[:-1]]) # x_i >= 0
+    b_ub = np.append(b_ub, np.zeros(N))
+    A_eq = np.ones(N+1).reshape((1, -1))
+    A_eq[0][-1] = 0
+    b_eq = np.array(N).reshape((-1))
+    opt_result = linprog(c, A_ub, b_ub, A_eq, b_eq, options={'disp': True})
+    return opt_result['x'][:-1] # last value is gap
 
 def ex(arr, j, i):
     return np.exp(-norm(arr[i] - arr[j])**2)
