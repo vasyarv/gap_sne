@@ -3,6 +3,7 @@ from numpy.linalg import norm
 from functools import lru_cache
 from tqdm import tqdm
 from scipy.optimize import linprog
+from sklearn.metrics import accuracy_score, f1_score
 
 def get_weights_gap(code_matrix, dich_classifiers=None, weights_type=None):
     l, N = code_matrix.shape
@@ -304,7 +305,7 @@ def add_random_dich(l=10, code_matrix=None):
 #     print(code_matrix.shape, dich.shape)
     return np.hstack([code_matrix, dich.reshape((-1, 1))])
 
-def train_dichs(code_matrix, BaseClassifier, params=None):
+def train_dichs(code_matrix, X_train, y_train, X_test, y_test, BaseClassifier, params=None):
     dich_classifiers = []
     l, N = code_matrix.shape
     for i in tqdm(range(N), desc='Training dich classifiers'):
