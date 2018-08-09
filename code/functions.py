@@ -296,7 +296,7 @@ def add_random_dich(l=10, code_matrix=None):
     # матрица непуста
     dich = np.random.randint(0, 2, l)
     def does_dich_exist(dich, code_matrix):
-        diff = (cm == dich).sum(axis=0)
+        diff = (code_matrix == dich).sum(axis=0)
         if diff.max() == l or diff.min() == 0:
             return True
         return False
