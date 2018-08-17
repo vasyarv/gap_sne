@@ -5,6 +5,24 @@ from tqdm import tqdm
 from scipy.optimize import linprog
 from sklearn.metrics import accuracy_score, f1_score
 
+def sq(a):
+    return np.dot(a, a)
+
+def cluster_score(data, target, score_type='trace_w'):
+    # target 0...max
+    num_class = target.max() + 1
+    score = 0
+    for i in range(num_class):
+        s = 0
+        sub_data = data[target==i]
+        mean_vector = sub_data.mean(axis=0)
+        for x in sub_data:
+            s += sq(x-mean_vector)
+        if score_type != 'trace_w':
+            s /= len(sub_data)
+        score += s
+    return score
+
 def get_weights_gap(code_matrix, dich_classifiers=None, weights_type=None):
     l, N = code_matrix.shape
     c = np.zeros(N+1)
@@ -295,16 +313,20 @@ def add_random_dich(l=10, code_matrix=None):
         return dich.reshape((-1, 1))
     # матрица непуста
     dich = np.random.randint(0, 2, l)
-    def does_dich_exist(dich, code_matrix):
-        diff = (code_matrix == dich).sum(axis=0)
-        if diff.max() == l or diff.min() == 0:
-            return True
-        return False
+    
     while np.unique(dich).size == 1 and not does_dich_exist(dich, code_matrix):
         dich = np.random.randint(0, 2, l)
 #     print(code_matrix.shape, dich.shape)
     return np.hstack([code_matrix, dich.reshape((-1, 1))])
 
+def does_dich_exist(dich, code_matrix):
+    if dich.max() == 0 or dich.min() == 1:
+        return True # trivial dich
+    diff = (code_matrix == dich).sum(axis=0)
+    if diff.max() == l or diff.min() == 0:
+        return True
+    return False
+    
 def train_dichs(code_matrix, X_train, y_train, X_test, y_test, BaseClassifier, params=None):
     dich_classifiers = []
     l, N = code_matrix.shape
