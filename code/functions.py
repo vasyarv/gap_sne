@@ -298,11 +298,40 @@ def predict_all(X_test, dich_classifiers, code_matrix, score_type=None, weight_t
     preds = np.array(preds)
     return preds
 
+def int2bin(val, l):
+    res = np.zeros(l)
+    i = 0
+    while val>0:
+        res[i] = val&1
+        val = val>>1     # val=val/2
+        i += 1
+    return res[::-1] 
+
+def add_dich(dich, code_matrix=None):
+    if code_matrix is None:
+        return dich.reshape((-1, 1))
+    return np.hstack([code_matrix, dich.reshape((-1, 1))])
+
+
 def make_random_dichs(l, N):
+    if N > 2**(l-1) - 1:
+        N = 2**(l-1) - 1
+        print('Dich Num reduced to max={}'.format(N))
+    code_matrix = None
+    binary_dich_numbers = np.random.choice(np.arange(0, 2**(l-1) - 1), N, replace=False)
+    for dich in tqdm(binary_dich_numbers, desc='Adding dich'):
+        binary_dich = int2bin(dich+1, l)
+        code_matrix = add_dich(binary_dich, code_matrix)
+    return code_matrix
+
+def make_random_dichs_old(l, N):
     code_matrix = None
     for i in tqdm(range(N), desc='Adding dich'):
         code_matrix = add_random_dich(l, code_matrix)
     return code_matrix
+
+
+
     
 def add_random_dich(l=10, code_matrix=None):
     if code_matrix is None:
@@ -314,7 +343,7 @@ def add_random_dich(l=10, code_matrix=None):
     # матрица непуста
     dich = np.random.randint(0, 2, l)
     
-    while np.unique(dich).size == 1 and not does_dich_exist(dich, code_matrix):
+    while does_dich_exist(dich, code_matrix):
         dich = np.random.randint(0, 2, l)
 #     print(code_matrix.shape, dich.shape)
     return np.hstack([code_matrix, dich.reshape((-1, 1))])
