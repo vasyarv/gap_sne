@@ -320,9 +320,10 @@ def add_random_dich(l=10, code_matrix=None):
     return np.hstack([code_matrix, dich.reshape((-1, 1))])
 
 def does_dich_exist(dich, code_matrix):
+    l = code_matrix.shape[0]
     if dich.max() == 0 or dich.min() == 1:
         return True # trivial dich
-    diff = (code_matrix == dich).sum(axis=0)
+    diff = (code_matrix.T == dich).sum(axis=0)
     if diff.max() == l or diff.min() == 0:
         return True
     return False
