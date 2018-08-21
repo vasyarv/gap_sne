@@ -291,12 +291,17 @@ def predict_class(x, dich_classifiers, code_matrix, score_type=None, weights=1, 
 
 def predict_all(X_test, dich_classifiers, code_matrix, score_type=None, weight_type=None):
     if weight_type is None:
-        weights = 1
+        weights = np.array([1]*len(dich_classifiers))
+    elif weight_type == -1:
+        weights = get_weights_gap(code_matrix, dich_classifiers, None)
     else:
-        weights = get_weights_gap(code_matrix, dich_classifiers, score_type)
+        weights = get_weights_gap(code_matrix, dich_classifiers, weight_type)
+    num_real_dich = (weights > np.median(weights)/100).sum()
+#     print('Num dich = {}/{}'.format(num_real_dich, len(weights)))
+#     print(weights)
     preds = [predict_class(x, dich_classifiers, code_matrix, score_type, weights) for x in X_test]
     preds = np.array(preds)
-    return preds
+    return preds, num_real_dich
 
 def int2bin(val, l):
     res = np.zeros(l)
