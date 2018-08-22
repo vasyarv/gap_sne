@@ -357,7 +357,7 @@ def does_dich_exist(dich, code_matrix):
     l = code_matrix.shape[0]
     if dich.max() == 0 or dich.min() == 1:
         return True # trivial dich
-    diff = (code_matrix.T == dich).sum(axis=0)
+    diff = (code_matrix.T == dich).sum(axis=1)
     if diff.max() == l or diff.min() == 0:
         return True
     return False
