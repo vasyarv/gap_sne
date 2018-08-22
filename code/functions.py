@@ -361,11 +361,11 @@ def make_local_optimal_dichotomy(cur_dich, code_matrix, score_function, verbose=
         cur_dich[best_index] = 1 - cur_dich[best_index]
     return cur_dich
 
-def make_code_matrix_local(l, N, score_function):
+def make_code_matrix_local(l, N, score_function, verbose=1):
     code_matrix = None
     for i in tqdm(range(N)):
         new_dich = np.random.randint(0, 2, l)
-        new_dich = make_local_optimal_dichotomy(new_dich.copy(), code_matrix, score_function, verbose=1)
+        new_dich = make_local_optimal_dichotomy(new_dich.copy(), code_matrix, score_function, verbose)
         code_matrix = add_dich(new_dich, code_matrix)
     return code_matrix
     
