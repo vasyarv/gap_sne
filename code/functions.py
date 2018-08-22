@@ -337,7 +337,6 @@ def make_random_dichs_old(l, N):
 
 def make_local_optimal_dichotomy(cur_dich, code_matrix, score_function, verbose=0):
     cur_score = score_function(cur_dich)
-#     cur_score = score_function(cur_dich, X_train, y_train, X_test, y_test)
     next_score = cur_score
     while True:
         next_dich = cur_score.copy()
@@ -347,7 +346,6 @@ def make_local_optimal_dichotomy(cur_dich, code_matrix, score_function, verbose=
             next_dich[i] = 1 - next_dich[i]
             if not does_dich_exist(next_dich, code_matrix): #дихотомия нормальная
                 next_scores[i] = score_function(next_dich)
-#                 next_scores[i] = score_function(next_dich, X_train, y_train, X_test, y_test)
         next_scores = np.array(next_scores)
         next_score = next_scores.max()
         if next_score <= cur_score: #идем только на повышение, но можно скор сделать поменьше
@@ -359,6 +357,8 @@ def make_local_optimal_dichotomy(cur_dich, code_matrix, score_function, verbose=
         if verbose > 1:
             print(next_score, best_index)
         cur_dich[best_index] = 1 - cur_dich[best_index]
+        if cur_dich.sum() == 0 or cur_dich.sum() == len(cur_dich):
+            print(next_scores)
     return cur_dich
 
 def make_code_matrix_local(l, N, score_function, verbose=1):
