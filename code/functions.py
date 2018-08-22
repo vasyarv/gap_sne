@@ -361,6 +361,13 @@ def make_local_optimal_dichotomy(cur_dich, code_matrix, score_function, verbose=
         cur_dich[best_index] = 1 - cur_dich[best_index]
     return cur_dich
 
+def make_code_matrix_local(l, N, score_function):
+    code_matrix = None
+    for i in tqdm(range(N)):
+        new_dich = np.random.randint(0, 2, l)
+        new_dich = make_local_optimal_dichotomy(new_dich.copy(), code_matrix, score_function, verbose=1)
+        code_matrix = add_dich(new_dich, code_matrix)
+    return code_matrix
     
 def add_random_dich(l=10, code_matrix=None):
     if code_matrix is None:
@@ -378,6 +385,8 @@ def add_random_dich(l=10, code_matrix=None):
     return np.hstack([code_matrix, dich.reshape((-1, 1))])
 
 def does_dich_exist(dich, code_matrix):
+    if code_matrix is None:
+        return False
     l = code_matrix.shape[0]
     if dich.max() == 0 or dich.min() == 1:
         return True # trivial dich
