@@ -5,6 +5,10 @@ from tqdm import tqdm
 from scipy.optimize import linprog
 from sklearn.metrics import accuracy_score, f1_score
 
+import matplotlib
+import matplotlib.pyplot as plt
+matplotlib.rcParams.update({'errorbar.capsize': 2})
+
 def sq(a):
     return np.dot(a, a)
 
@@ -287,6 +291,8 @@ def predict_class(x, dich_classifiers, code_matrix, score_type=None, weights=1, 
     if verbose:
         print(hammings)
     indices = np.where(hammings == hammings.min())
+    if len(indices[0]) == 0:
+        print(hammings, hammings.min(), score_type, scores)
     return np.random.choice(indices[0])
 
 def predict_all(X_test, dich_classifiers, code_matrix, score_type=None, weight_type=None):
@@ -417,3 +423,89 @@ def train_dichs(code_matrix, X_train, y_train, X_test, y_test, BaseClassifier, p
         dich_classifiers.append({'model': clf, 'accuracy': accuracy, 
                                  'f1': f1, 'confusion_list': confusion_list})
     return dich_classifiers
+
+
+def plot_approach(df_, dataset='digits', 
+                approach='random', dich_range=[20,200],
+                xticks=np.arange(20, 210, 10),
+                yticks=np.arange(0, 1., 0.005),
+                title='Сравнение точности при взвешивании по F-мере',
+                clf='linearsvc'):
+    df = df_.copy()
+    df.sort_values(by=['dataset', 'num_real_dich'], inplace=True)
+    df.drop_duplicates(subset=['dataset', 'num_real_dich', 'approach'], inplace=True)
+    df = df[(df['num_real_dich'] > dich_range[0]) & (df['num_real_dich'] <= dich_range[1])]
+    df = df[df['clf'] == clf]
+    sub_df = df[(df['dataset'] == dataset) & (df['approach'] == approach)]
+    if len(sub_df) == 0:
+        return None
+    
+    fig = plt.figure()
+    ax = fig.gca()
+    ax.set_xticks(xticks)
+    ax.set_yticks(yticks)
+
+    x = sub_df['num_real_dich'].values
+    y = sub_df['ecoc_mean'].values
+    error = sub_df['ecoc_std'].values
+    plt.errorbar(x, y, yerr=error, fmt='-o', label='Стандартное расстояние Хемминга')
+
+    y = sub_df['accuracy_mean'].values
+    error = sub_df['accuracy_std'].values
+    plt.errorbar(x, y, yerr=error, fmt='-o', label='Взвешенное по вероятности классификации')
+
+    y = sub_df['f1_mean'].values
+    error = sub_df['f1_std'].values
+    plt.errorbar(x, y, yerr=error, fmt='-o', label='Взвешенное по F-мере')
+
+    y = sub_df['confusion_list_mean'].values
+    error = sub_df['confusion_list_std'].values
+    plt.errorbar(x, y, yerr=error, fmt='-o', label='Взвешенное по спискам неточностей')
+
+    plt.legend(loc='lower right', fontsize=16)
+    plt.title('Случайное построение дихотомической матрицы', fontsize=16)
+
+    plt.xlabel('Количество дихотомий в матрице', fontsize=14)
+    plt.ylabel('Точность (accuracy)', fontsize=14)
+
+    plt.grid()
+    return plt
+    
+    
+def plot_score(df_, 
+                dataset='digits', 
+                score_type='f1', 
+                xticks=np.arange(20, 55, 5), 
+                yticks=np.arange(0, 1., 0.01), 
+                approaches=['random'],
+                legends=['Случайное построение дихотомической матрицы'],
+                dich_range=[20,60],
+                title='Сравнение точности при взвешивании по F-мере',
+                clf='linearsvc'):
+    df = df_.copy()
+    df.sort_values(by=['dataset', 'num_real_dich'], inplace=True)
+    df.drop_duplicates(subset=['dataset', 'num_real_dich', 'approach'], inplace=True)
+    df = df[(df['num_real_dich'] > dich_range[0]) & (df['num_real_dich'] <= dich_range[1])]
+    df = df[df['clf'] == clf]
+    if len(df) == 0:
+        return None
+    assert len(approaches) == len(legends)
+
+    fig = plt.figure()
+    ax = fig.gca()
+    ax.set_xticks(xticks)
+    ax.set_yticks(yticks)
+    for i in range(len(approaches)):
+        approach = approaches[i]
+        legend = legends[i]
+        sub_df = df[(df['dataset'] == dataset) & (df['approach'] == approach)]
+        x = sub_df['num_real_dich'].values
+        y = sub_df[score_type+'_mean'].values
+        error = sub_df[score_type+'_std'].values
+        plt.errorbar(x, y, yerr=error, fmt='-o', label=legend)
+    plt.legend(loc='lower right', fontsize=16)
+    plt.title(title, fontsize=16)
+    plt.xlabel('Количество дихотомий в матрице', fontsize=14)
+    plt.ylabel('Точность', fontsize=14)
+    plt.grid()
+    return plt
