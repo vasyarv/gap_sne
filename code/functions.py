@@ -342,7 +342,7 @@ def make_random_dichs_old(l, N):
     return code_matrix
 
 def make_local_optimal_dichotomy(cur_dich, code_matrix, score_function, verbose=0):
-    cur_score = score_function(cur_dich)
+    cur_score = score_function(cur_dich, code_matrix)
     next_score = cur_score
     while True:
         next_dich = cur_dich.copy()
@@ -351,7 +351,7 @@ def make_local_optimal_dichotomy(cur_dich, code_matrix, score_function, verbose=
             next_dich = cur_dich.copy()
             next_dich[i] = 1 - next_dich[i]
             if not does_dich_exist(next_dich, code_matrix): #дихотомия нормальная
-                next_scores[i] = score_function(next_dich)
+                next_scores[i] = score_function(next_dich, code_matrix)
         next_scores = np.array(next_scores)
         next_score = next_scores.max()
         #print(next_scores)
@@ -475,7 +475,7 @@ def plot_approach(df_, dataset='digits',
 def plot_score(df_, 
                 dataset='digits', 
                 score_type='f1', 
-                xticks=np.arange(20, 55, 5), 
+                xticks=np.arange(20, 60, 5), 
                 yticks=np.arange(0, 1., 0.01), 
                 approaches=['random'],
                 legends=['Случайное построение дихотомической матрицы'],
