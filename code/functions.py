@@ -475,7 +475,7 @@ def plot_approach(df_, dataset='digits',
 def plot_score(df_, 
                 dataset='digits', 
                 score_type='f1', 
-                xticks=np.arange(20, 60, 5), 
+                xticks=np.arange(20, 300, 5), 
                 yticks=np.arange(0, 1., 0.01), 
                 approaches=['random'],
                 legends=['Случайное построение дихотомической матрицы'],
@@ -483,10 +483,11 @@ def plot_score(df_,
                 title='Сравнение точности при взвешивании по F-мере',
                 clf='linearsvc'):
     df = df_.copy()
-    df.sort_values(by=['dataset', 'num_real_dich'], inplace=True)
-    df.drop_duplicates(subset=['dataset', 'num_real_dich', 'approach'], inplace=True)
-    df = df[(df['num_real_dich'] > dich_range[0]) & (df['num_real_dich'] <= dich_range[1])]
-    df = df[df['clf'] == clf]
+    df = df.sort_values(by=['dataset', 'approach', 'num_real_dich', 'clf']).reset_index(drop=True)
+    df = df.drop_duplicates(subset=['dataset', 'num_real_dich', 'approach', 'clf']).reset_index(drop=True)
+    df = df[(df['num_real_dich'] > dich_range[0]) & (df['num_real_dich'] <= dich_range[1])].reset_index(drop=True)
+    df = df[df['clf'] == clf].reset_index(drop=True)
+    df = df[(df['dataset'] == dataset)].reset_index(drop=True)
     if len(df) == 0:
         return None
     assert len(approaches) == len(legends)
@@ -498,7 +499,7 @@ def plot_score(df_,
     for i in range(len(approaches)):
         approach = approaches[i]
         legend = legends[i]
-        sub_df = df[(df['dataset'] == dataset) & (df['approach'] == approach)]
+        sub_df = df[df['approach'] == approach]
         x = sub_df['num_real_dich'].values
         y = sub_df[score_type+'_mean'].values
         error = sub_df[score_type+'_std'].values
