@@ -429,7 +429,6 @@ def plot_approach(df_, dataset='digits',
                 approach='random', dich_range=[20,200],
                 xticks=np.arange(20, 210, 10),
                 yticks=np.arange(0, 1., 0.005),
-                title='Сравнение точности при взвешивании по F-мере',
                 clf='linearsvc'):
     df = df_.copy()
     df.sort_values(by=['dataset', 'num_real_dich'], inplace=True)
@@ -463,15 +462,43 @@ def plot_approach(df_, dataset='digits',
     plt.errorbar(x, y, yerr=error, fmt='-o', label='Взвешенное по спискам неточностей')
 
     plt.legend(loc='lower right', fontsize=16)
-    plt.title('Случайное построение дихотомической матрицы', fontsize=16)
-
     plt.xlabel('Количество дихотомий в матрице', fontsize=14)
     plt.ylabel('Точность (accuracy)', fontsize=14)
 
     plt.grid()
     return plt
     
+def plot_max_gap(df_,  
+                 dataset='digits',
+                xticks=np.arange(20, 300, 10), 
+                yticks=np.arange(20, 310, 2),
+                legend='Отбор дихотомий максимизацией межклассового зазора',
+                dich_range=[20,100]):
+    df = df_.copy()
+    df = df[df['approach'] == 'max_gap']
+    df = df[df['dataset'] == dataset]
+    df = df[~df['initial_dich'].isnull()]
+    df = df.sort_values(by=['initial_dich', 'clf']).reset_index(drop=True)
+    df = df.drop_duplicates(subset=['dataset', 'num_real_dich', 'approach', 'clf']).reset_index(drop=True)
+    df = df[(df['num_real_dich'] > dich_range[0]) & (df['num_real_dich'] <= dich_range[1])].reset_index(drop=True)
+    if len(df) == 0:
+        return None
+
+    fig = plt.figure()
+    ax = fig.gca()
+    ax.set_xticks(xticks)
+    ax.set_yticks(yticks)
     
+    x = df['initial_dich'].values
+    y = df['num_real_dich'].values
+    plt.errorbar(x, y, fmt='-o', label=legend)
+    
+    plt.legend(loc='lower right', fontsize=16)
+    plt.xlabel('Исходное количество дихотомий', fontsize=14)
+    plt.ylabel('Количество дихотомий после отбора', fontsize=14)
+    plt.grid()
+    return plt
+
 def plot_score(df_, 
                 dataset='digits', 
                 score_type='f1', 
@@ -505,7 +532,6 @@ def plot_score(df_,
         error = sub_df[score_type+'_std'].values
         plt.errorbar(x, y, yerr=error, fmt='-o', label=legend)
     plt.legend(loc='lower right', fontsize=16)
-    plt.title(title, fontsize=16)
     plt.xlabel('Количество дихотомий в матрице', fontsize=14)
     plt.ylabel('Точность', fontsize=14)
     plt.grid()
