@@ -479,7 +479,7 @@ def plot_max_gap(df_,
     df = df[df['dataset'] == dataset]
     df = df[~df['initial_dich'].isnull()]
     df = df.sort_values(by=['initial_dich', 'clf']).reset_index(drop=True)
-    df = df.drop_duplicates(subset=['dataset', 'num_real_dich', 'approach', 'clf']).reset_index(drop=True)
+    df = df.drop_duplicates(subset=['dataset', 'initial_dich', 'approach', 'clf']).reset_index(drop=True)
     df = df[(df['num_real_dich'] > dich_range[0]) & (df['num_real_dich'] <= dich_range[1])].reset_index(drop=True)
     if len(df) == 0:
         return None
