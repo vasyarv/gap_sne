@@ -426,17 +426,22 @@ def train_dichs(code_matrix, X_train, y_train, X_test, y_test, BaseClassifier, p
 
 
 def plot_approach(df_, dataset='digits', 
-                approach='random', dich_range=[20,200],
+                approach='random', 
+                dich_range=[20,200],
                 xticks=np.arange(20, 210, 10),
                 yticks=np.arange(0, 1., 0.005),
-                clf='linearsvc'):
+                clf='linearsvc',
+                shift_step=0):
     df = df_.copy()
     df.sort_values(by=['dataset', 'num_real_dich'], inplace=True)
-    df.drop_duplicates(subset=['dataset', 'num_real_dich', 'approach'], inplace=True)
+    df.drop_duplicates(subset=['dataset', 'num_real_dich', 'approach', 'clf'], inplace=True)
     df = df[(df['num_real_dich'] > dich_range[0]) & (df['num_real_dich'] <= dich_range[1])]
     df = df[df['clf'] == clf]
-    sub_df = df[(df['dataset'] == dataset) & (df['approach'] == approach)]
+    df = df[df['dataset'] == dataset]
+    df = df[df['approach'] == approach]
+    sub_df = df
     if len(sub_df) == 0:
+        print('No such records')
         return None
     
     fig = plt.figure()
@@ -449,17 +454,23 @@ def plot_approach(df_, dataset='digits',
     error = sub_df['ecoc_std'].values
     plt.errorbar(x, y, yerr=error, fmt='-o', label='Стандартное расстояние Хемминга')
 
+    if shift_step:
+        x += shift_step
     y = sub_df['accuracy_mean'].values
     error = sub_df['accuracy_std'].values
     plt.errorbar(x, y, yerr=error, fmt='-o', label='Взвешенное по вероятности классификации')
 
+    if shift_step:
+        x += shift_step
     y = sub_df['f1_mean'].values
     error = sub_df['f1_std'].values
     plt.errorbar(x, y, yerr=error, fmt='-o', label='Взвешенное по F-мере')
 
+    if shift_step:
+        x += shift_step
     y = sub_df['confusion_list_mean'].values
     error = sub_df['confusion_list_std'].values
-    plt.errorbar(x, y, yerr=error, fmt='-o', label='Взвешенное по спискам неточностей')
+    plt.errorbar(x, y, yerr=error, fmt='-o', label='Взвешенное по спискам точностей')
 
     plt.legend(loc='lower right', fontsize=16)
     plt.xlabel('Количество дихотомий в матрице', fontsize=14)
@@ -499,6 +510,41 @@ def plot_max_gap(df_,
     plt.grid()
     return plt
 
+
+def plot_max_gap_many(df_,  
+                 datasets=['digits'],
+                 labels=['Распознавание цифр (10 классов)'],
+                xticks=np.arange(20, 300, 10), 
+                yticks=np.arange(20, 310, 2),
+                dich_range=[20,100]):
+    fig = plt.figure()
+    ax = fig.gca()
+    ax.set_xticks(xticks)
+    ax.set_yticks(yticks)
+    for i in range(len(datasets)):
+        dataset = datasets[i]
+        label = labels[i]
+        df = df_.copy()
+        df = df[df['approach'] == 'max_gap']
+        df = df[df['dataset'] == dataset]
+        df = df[~df['initial_dich'].isnull()]
+        df = df.sort_values(by=['initial_dich', 'clf']).reset_index(drop=True)
+        df = df.drop_duplicates(subset=['dataset', 'initial_dich', 'approach', 'clf']).reset_index(drop=True)
+        df = df[(df['initial_dich'] > dich_range[0]) & (df['initial_dich'] <= dich_range[1])].reset_index(drop=True)
+        if len(df) == 0:
+            return None
+
+        x = df['initial_dich'].values
+        y = df['num_real_dich'].values
+        plt.errorbar(x, y, fmt='-o', label=label)
+    
+    plt.legend(loc='lower right', fontsize=16)
+    plt.xlabel('Исходное количество дихотомий', fontsize=14)
+    plt.ylabel('Количество дихотомий после отбора', fontsize=14)
+    plt.grid()
+    return plt
+
+
 def plot_score(df_, 
                 dataset='digits', 
                 score_type='f1', 
@@ -508,7 +554,8 @@ def plot_score(df_,
                 legends=['Случайное построение дихотомической матрицы'],
                 dich_range=[20,60],
                 title='Сравнение точности при взвешивании по F-мере',
-                clf='linearsvc'):
+                clf='linearsvc',
+                shift_step=0):
     df = df_.copy()
     df = df.sort_values(by=['dataset', 'approach', 'num_real_dich', 'clf']).reset_index(drop=True)
     df = df.drop_duplicates(subset=['dataset', 'num_real_dich', 'approach', 'clf']).reset_index(drop=True)
@@ -528,6 +575,9 @@ def plot_score(df_,
         legend = legends[i]
         sub_df = df[df['approach'] == approach]
         x = sub_df['num_real_dich'].values
+        
+        if shift_step:
+            x += i*shift_step
         y = sub_df[score_type+'_mean'].values
         error = sub_df[score_type+'_std'].values
         plt.errorbar(x, y, yerr=error, fmt='-o', label=legend)
